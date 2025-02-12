@@ -1,0 +1,8 @@
+config 'lte' config
+        option sms 1
+        option pin "0000"
+        option lte_network_interface "wan"
+        option allow_roaming 1
+        option change_dns 1
+        option change_dns1 1
+        option change_dns2 1
