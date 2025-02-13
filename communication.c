@@ -1,7 +1,7 @@
 #include "lted.h"
 #include "myll.h"
 
-int sd;
+int sd = 0;
 bool conn_status;
 
 char *uci_command(char *command,char *path,char *value)
@@ -113,6 +113,8 @@ int make_connection (char *ip)
   struct in_addr ipv4addr;
   struct hostent *hp;
 
+  if (sd != 0) close(sd);
+
   sd = socket (AF_INET, SOCK_STREAM, 0);
   server.sin_family = AF_INET;
   inet_pton (AF_INET, ip, &server.sin_addr);
@@ -219,7 +221,7 @@ at_return *send_at_command (char *message)
   while (1)
     {
       int num_bytes = read (sd, tmp_buff, BUFFER_SIZE - 1);
-      at_msg->conn_status = conn_status = (num_bytes == -1) ? false : true;
+      at_msg->conn_status = conn_status = ((num_bytes == -1) || (num_bytes == 0)) ? false : true; // if -1 error or 0 - no reading - so socket is ?!
       if (!at_msg->conn_status) 
 	{
 	sd = -1;

@@ -1,0 +1,6 @@
+#!/bin/sh
+IFACE="$(uci get lte.config.lte_network_interface)"
+echo $IFACE
+ifconfig $IFACE down
+sleep 1
+ifconfig $IFACE up

@@ -2,6 +2,12 @@
 
 char *ip;
 bool antena_started;
+bool renew_threads = false;
+pthread_t t1;
+
+
+struct sockaddr_in alive_servaddr, alive_cliaddr;
+int alive_sockfd;
 
 bool is_antena_started()
 {
@@ -9,39 +15,40 @@ bool is_antena_started()
 	return antena_started;
 }
 
+void make_alive_socket()
+{
+  alive_sockfd = socket (AF_INET, SOCK_DGRAM, 0);
+  alive_servaddr.sin_family = AF_INET;
+  alive_servaddr.sin_addr.s_addr = inet_addr (ip);
+  alive_servaddr.sin_port = htons (PORT_UDP_ALIVE);	//destination port for incoming packets
+  alive_cliaddr.sin_family = AF_INET;
+  alive_cliaddr.sin_addr.s_addr = htonl (INADDR_ANY);
+  alive_cliaddr.sin_port = htons (PORT_UDP_ALIVE);	//source port for outgoing packets
+  bind (alive_sockfd, (struct sockaddr *) &alive_cliaddr, sizeof (alive_cliaddr));
+
+}
 
 void *udp_alive_thread ()
 {
   const char *hello = "IDU ALIVE";
   const char *buffer[100] = { 0 };
-  int sockfd, read_len, len;
-  struct sockaddr_in servaddr, cliaddr;
+  int read_len, len;
   int no_repeats;
-
-
-  sockfd = socket (AF_INET, SOCK_DGRAM, 0);
-  servaddr.sin_family = AF_INET;
-  servaddr.sin_addr.s_addr = inet_addr (ip);
-  servaddr.sin_port = htons (PORT_UDP_ALIVE);	//destination port for incoming packets
-
-//    struct timeval read_timeout;
-//    read_timeout.tv_sec = 0;
-//    read_timeout.tv_usec = 10;
-//    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &read_timeout, sizeof read_timeout);
-
-  cliaddr.sin_family = AF_INET;
-  cliaddr.sin_addr.s_addr = htonl (INADDR_ANY);
-  cliaddr.sin_port = htons (PORT_UDP_ALIVE);	//source port for outgoing packets
-  bind (sockfd, (struct sockaddr *) &cliaddr, sizeof (cliaddr));
+  make_alive_socket();
 
   while (1)
     {
-      sendto (sockfd, (const char *) hello, strlen (hello), 0,
-	      (struct sockaddr *) &servaddr, sizeof (servaddr));
+      if (renew_threads)
+	{
+	close(alive_sockfd);
+	make_alive_socket();
+	}
+      sendto (alive_sockfd, (const char *) hello, strlen (hello), 0,
+	      (struct sockaddr *) &alive_servaddr, sizeof (alive_servaddr));
       sleep (ALIVE_DELAY);
       read_len =
-	recvfrom (sockfd, &buffer, sizeof (buffer), 0,
-		  (struct sockaddr *) &cliaddr, (socklen_t *) & len);
+	recvfrom (alive_sockfd, &buffer, sizeof (buffer), 0,
+		  (struct sockaddr *) &alive_cliaddr, (socklen_t *) & len);
       buffer[read_len] = 0;
       if (strcmp ((char *) buffer, "ODU ALIVE") == 0)
 	{
@@ -64,7 +71,7 @@ void *udp_getspeed_thread ()
 {
   const char *hello = "getspeed";
   const char *buffer[100] = { 0 };
-  int sockfd, read_len, len;
+  int sockfd,read_len, len;
   struct sockaddr_in servaddr, cliaddr;
   sockfd = socket (AF_INET, SOCK_DGRAM, 0);
 
@@ -80,11 +87,11 @@ void *udp_getspeed_thread ()
   while (1)
     if (antena_started)
       {
-	sendto (sockfd, (const char *) hello, strlen (hello), 0,
+	sendto (alive_sockfd, (const char *) hello, strlen (hello), 0,
 		(struct sockaddr *) &servaddr, sizeof (servaddr));
 	sleep (GETSPEED_DELAY);
 	read_len =
-	  recvfrom (sockfd, buffer, sizeof (buffer), 0,
+	  recvfrom (alive_sockfd, buffer, sizeof (buffer), 0,
 		    (struct sockaddr *) &cliaddr, (socklen_t *) & len);
 	buffer[read_len] = 0;
       };
@@ -94,11 +101,20 @@ void *udp_getspeed_thread ()
 
 void make_udp_threads(char *new_ip) {
   ip = new_ip;
-  pthread_t t1;
   pthread_create (&t1, NULL, udp_alive_thread, NULL);
   pthread_detach (t1);
 
 /*    pthread_t t2;
     pthread_create(&t2, NULL, udp_getspeed_thread, NULL);
     pthread_detach(t2); */
+}
+
+bool first_run = true;
+
+void renew_udp_threads() {
+    renew_threads = true; // set flag so threads will detach
+    if (!first_run)
+	(ALIVE_DELAY > GETSPEED_DELAY) ? sleep(ALIVE_DELAY+1) : sleep(GETSPEED_DELAY+1); // sleep till we sure that threads are killed 
+	else first_run = false;
+    renew_threads = false;
 }

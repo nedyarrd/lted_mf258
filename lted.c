@@ -50,7 +50,7 @@ int main (int argc, char *argv[])
   
   while (1)
     {
-      printf ("LTED: Waiting for antenna to respond by UDP\n");
+/*      printf ("LTED: Waiting for antenna to respond by UDP\n");
       while (is_antena_started() != true) { sleep(1); }
       while (make_connection (host_ip) == -1)// if we don't have tcp connection wait 5 seconds and retry
 	    {
@@ -68,16 +68,29 @@ int main (int argc, char *argv[])
       at_msg = send_at_command ("AT+CGSN");	// show my imei
       print_and_free (at_msg);
       at_msg = send_at_command ("AT\%SWV1");	// show modem hardware revision?*/
-      print_and_free (at_msg);
+//      print_and_free (at_msg);
 	  
 	  while (1) 
 		{
 		// assume if we return from PIN stuff that everyting is OK
-		if (!is_atdaemon_connection()) 
+		if (!is_atdaemon_connection())  			// there is glith in firmware of antenna. Sometimes doesnt restart at all
+									// so You need to restart udp threads with new sockets
+									// and restart POE Interface... mostly is achieved by down and up interface
+									// that can only hapen when antena is soft restarted from web ui
+		    {
+		    renew_udp_threads();
+	            while (is_antena_started() != true) 
+			{ 
+			sleep(1);
+			char *poe = uci_get_string("lte.config.poe_restart");
+			printf(poe);
+			popen(poe,"r");
+			 }
 		    while (make_connection (host_ip) == -1)// if we don't have tcp connection wait 5 seconds and retry
-	    	    {
-		    sleep(5);
-	    	    }
+	    		{
+			sleep(5);
+	    		}
+		    }
 		at_check_pin();
 		if (!at_cereg()) break;
 		at_cgcontrdp();

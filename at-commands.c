@@ -64,8 +64,6 @@ bool at_activatepdp4()
 {
 	printf("Activating PDP Context\n");
 	at_return *at_msg;
-	at_msg = send_at_command_delay("AT%%GPDNTYPE=3,1",2);
-	if (!at_msg->conn_status) return at_msg; 
 	at_msg = send_at_command_delay("AT+CGACT=1,3",2);
 	if (!at_msg->conn_status) return at_msg; 
 }

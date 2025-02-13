@@ -6,3 +6,4 @@ config 'lte' config
         option change_dns 1
         option change_dns1 1
         option change_dns2 1
+	option poe_restart "ifconfig wan down && ifconfig wan up"
