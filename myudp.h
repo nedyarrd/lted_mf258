@@ -26,5 +26,5 @@
 
 bool is_antena_started();
 void make_udp_threads(char *ip);
-void kill_udp_threads();
+void renew_udp_threads();
 #endif
