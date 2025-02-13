@@ -19,6 +19,7 @@ lted_mipsel $(CC_MIPSEL): lted.o communication.o myll.o myudp.o at-commands.o
 install:
 	install lted /bin/lted
 	install -D etc/lte /etc/config/lte
+	install bin/poe_restart /bin/poe_restart
 
 clean:
 	rm -rf *.o
