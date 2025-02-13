@@ -8,7 +8,7 @@ It uses ZTE MF258 POE powered antenna to connect to internet. What You will need
 - compiler toolchain to make executable (I used https://github.com/openwrt/openwrt to build my own)
   - make CC=mipsel-openwrt-linux-gcc LD=mipsel-openwrt-linux-musl-ld
 - install executable by sftp'ing it to router
-  - scp lted lted@192.168.X.Y
+  - scp lted root@192.168.X.Y:lted
 - edit config file
 
 # Example config file
