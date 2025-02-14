@@ -1,8 +1,9 @@
 #ifndef __MY_LL_H
 #define __MY_LL_H
 
-#include<stdio.h>
-#include<stdlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <syslog.h>
 
 struct linenode {
     char *line;

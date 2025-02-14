@@ -62,7 +62,7 @@ void at_check_pin()
 
 bool at_activatepdp4()
 {
-	printf("Activating PDP Context\n");
+	syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_INFO),"Activating PDP Context\n");
 	at_return *at_msg;
 	at_msg = send_at_command_delay("AT+CGACT=1,3",2);
 	if (!at_msg->conn_status) return at_msg; 
@@ -130,7 +130,7 @@ bool at_cereg()
 
 void at_cgcontrdp()
 {
-	printf("Geting context\n");
+	syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_INFO),"Geting context\n");
 		at_return *at_msg;
 		at_msg = send_at_command_delay("AT+COPS=0",2); 		// https://onomondo.com/blog/at-command-cops/#at-cops 
 		if (!at_msg->conn_status) return; 							// AT+COPS=0 - automatic operator selection
@@ -285,3 +285,15 @@ void at_cgcontrdp()
 		uci_commit();
 		network_reload();
 }		
+
+void at_setup_sms()
+{
+    at_return *at_msg;
+
+    at_msg = send_at_command("AT+CSCA=\"\"");		// set SMS center to  ""
+    if (!at_msg->conn_status) return;
+    
+    at_msg = send_at_command("AT+CMGF=0");		// set SMS Format to  Text
+    if (!at_msg->conn_status) return;
+
+}

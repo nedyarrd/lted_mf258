@@ -18,6 +18,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <syslog.h>
 
 
 #define HOST "169.254.0.1"

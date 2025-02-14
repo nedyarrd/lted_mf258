@@ -18,7 +18,7 @@ void print_hex_array (char *buf)
 
 void print_and_free (at_return * at_msg)
 {
-  printf ("%s", at_msg->message);
+  syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_INFO),"%s", at_msg->message);
   FREE_AT_RETURN(at_msg);
 }
 
@@ -45,31 +45,13 @@ int main (int argc, char *argv[])
     host_ip = "169.254.0.1";
   else
     host_ip = argv[1];
+
+  openlog ("LTED", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
   get_uci_config();
   make_udp_threads(host_ip);
   
   while (1)
     {
-/*      printf ("LTED: Waiting for antenna to respond by UDP\n");
-      while (is_antena_started() != true) { sleep(1); }
-      while (make_connection (host_ip) == -1)// if we don't have tcp connection wait 5 seconds and retry
-	    {
-	    sleep(5);
-	    }
-
-      // antena started so we start AT configuration
-      printf ("Start sending AT Commands\n");
-      if (send_at_command ("AT")->result != true) {
-		perror ("LTED: thats not AT daemon\n");
-		exit (-1);
-		}
-      else
-	  printf ("LTED: Connected to AT Daemon\n");
-      at_msg = send_at_command ("AT+CGSN");	// show my imei
-      print_and_free (at_msg);
-      at_msg = send_at_command ("AT\%SWV1");	// show modem hardware revision?*/
-//      print_and_free (at_msg);
-	  
 	  while (1) 
 		{
 		// assume if we return from PIN stuff that everyting is OK
@@ -79,22 +61,23 @@ int main (int argc, char *argv[])
 									// that can only hapen when antena is soft restarted from web ui
 		    {
 		    renew_udp_threads();
-	            while (is_antena_started() != true) 
-			{ 
-			sleep(1);
-			char *poe = uci_get_string("lte.config.poe_restart");
-			printf(poe);
+		    if (!is_antena_started())
+			{
+		    	char *poe = uci_get_string("lte.config.poe_restart");		// if antena is not started that means no IP connection
 			popen(poe,"r");
-			 }
+			sleep(10);
+			}
+	            while (is_antena_started() != true) 
+			sleep(1);
+
 		    while (make_connection (host_ip) == -1)// if we don't have tcp connection wait 5 seconds and retry
-	    		{
 			sleep(5);
-	    		}
 		    }
 		at_check_pin();
 		if (!at_cereg()) break;
 		at_cgcontrdp();
 		at_activatepdp4();
+		// now get to SMS
 		sleep(AT_TIME_BETWEEN_CHECKS);
 		}
     }

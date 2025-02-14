@@ -28,7 +28,7 @@ char *uci_command(char *command,char *path,char *value)
 	bzero(buf2,UCI_PATH_LEN);
 	
 	sprintf(buf,"%s %s %s%s",UCI,command,path2,value2);
-	printf("%s\n",buf);
+	syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_INFO),"%s\n",buf);
 	fp = popen(buf, "r");
 	if (fp == NULL) {
 		sprintf(buf,"Cant run: %s",buf);
@@ -121,7 +121,7 @@ int make_connection (char *ip)
   server.sin_port = htons (PORT);
   if (connect (sd, (struct sockaddr *) &server, sizeof (server)) != 0)
     {
-      printf ("No connection to ODU\n");
+      syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_ERR),"No connection to ODU\n");
       conn_status = false;
       return -1;
     }

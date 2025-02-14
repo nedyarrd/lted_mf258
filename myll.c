@@ -19,7 +19,7 @@ struct linenode *my_ll_append(struct linenode *head,char *line)    //insert at t
 
     new = (struct linenode*)malloc(sizeof(struct linenode));
     if(new == NULL){
-        printf("Unable to allocate memory.");
+        syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_ERR),"Unable to allocate memory.");
         exit(-1);
     }
     else
