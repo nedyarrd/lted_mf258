@@ -4,7 +4,7 @@ CFLAGS=-I. -g -flto -fuse-linker-plugin
 CFLAGS=-I. -g -flto -fuse-linker-plugin -Os -fomit-frame-pointer 
 
 lted: lted.o communication.o myll.o myudp.o at-commands.o
-	$(CC) -fuse-linker-plugin -o lted lted.o communication.o myll.o myudp.o at-commands.o
+	$(CC) -fuse-linker-plugin -flto -o lted lted.o communication.o myll.o myudp.o at-commands.o
 	rm -rf *.o
 	cp lted lted-strip
 	mipsel-openwrt-linux-strip lted-strip

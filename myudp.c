@@ -9,8 +9,6 @@ pthread_t t1;
 struct sockaddr_in alive_servaddr, alive_cliaddr;
 int alive_sockfd;
 
-
-
 struct sockaddr_in speed_servaddr, speed_cliaddr;
 int speed_sockfd;
 
@@ -118,9 +116,11 @@ void make_udp_threads(char *new_ip) {
   pthread_create (&t1, NULL, udp_alive_thread, NULL);
   pthread_detach (t1);
 
-    pthread_t t2;
-    pthread_create(&t2, NULL, udp_getspeed_thread, NULL);
-    pthread_detach(t2); 
+  pthread_t t2;
+  pthread_create(&t2, NULL, udp_getspeed_thread, NULL);
+  pthread_detach(t2); 
+  sleep(ALIVE_DELAY); // sleep till we know that ALIVE was sent
+    
 }
 
 bool first_run = true;

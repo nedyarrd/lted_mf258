@@ -33,6 +33,66 @@ void get_uci_config()
 		uci_config.change_dns2 = uci_get_int("lte.config.change_dns2");
 }
 
+
+static void signal_handler(int sig, siginfo_t *si, void *unused)
+{
+
+    // remove PID file when we have SIGSEGV
+    FILE *pidFile = fopen("/var/run/lted.pid", "r" );
+    if (pidFile)
+	{
+	fclose(pidFile);
+	remove("/var/run/lted.pid");
+	}
+    exit(EXIT_FAILURE);
+}
+
+void setup()
+{
+    struct sigaction sa;
+    FILE *pidFile;
+
+    openlog ("LTED", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+    sa.sa_flags = SA_SIGINFO;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_sigaction = signal_handler;
+    if (sigaction(SIGSEGV, &sa, NULL) == -1)
+	{
+        syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_ERR),"Cant handle Signals");
+	exit(EXIT_FAILURE);
+	}
+    pidFile = fopen("/var/run/lted.pid", "r" );
+    if (pidFile)
+	{
+	// read it and check that pid exists
+	char pid_c[64];
+	fgets(pid_c,63,pidFile);
+	int pid = atoi(pid_c);
+	if (pid != 0)
+	    {
+	    struct stat sts;
+	    char *proc;
+	    asprintf(&proc,"/proc/%d",pid);
+	    if (stat(proc, &sts) != -1) {
+    	      // process exists, so don't make another
+		exit(0);
+		}
+	    }
+    fclose(pidFile);
+    // we got to this point, so process doesnt exist or PID file doesnt exist
+        }
+    pidFile = fopen("/var/run/lted.pid", "w" );
+    if (!pidFile)
+        syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_ERR),"Can't make PID file");
+	else
+	{
+	fprintf(pidFile,"%d",getpid());
+	fclose(pidFile);
+	}
+
+}
+
+
 int main (int argc, char *argv[])
 {
   at_return *at_msg;
@@ -45,8 +105,7 @@ int main (int argc, char *argv[])
     host_ip = "169.254.0.1";
   else
     host_ip = argv[1];
-
-  openlog ("LTED", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
+  setup();
   get_uci_config();
   make_udp_threads(host_ip);
   

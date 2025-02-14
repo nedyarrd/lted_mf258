@@ -19,6 +19,8 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <syslog.h>
+#include <sys/stat.h>
+
 
 
 #define HOST "169.254.0.1"
