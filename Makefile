@@ -1,7 +1,7 @@
 CC=gcc
 #CC_MIPSEL=mipsel-linux-gnu-gcc-12
 CFLAGS=-I. -g -flto -fuse-linker-plugin
-CFLAGS=-I. -g -flto -fuse-linker-plugin -Os -fomit-frame-pointer 
+CFLAGS=-I. -g -flto -fuse-linker-plugin  -fomit-frame-pointer 
 
 lted: lted.o communication.o myll.o myudp.o at-commands.o
 	$(CC) -fuse-linker-plugin -flto -o lted lted.o communication.o myll.o myudp.o at-commands.o

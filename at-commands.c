@@ -68,13 +68,45 @@ bool at_activatepdp4()
 	if (!at_msg->conn_status) return at_msg; 
 }
 
+
 bool at_cereg()
 {
 	int i;
 	bool tmp = false;
 	at_return *at_msg;
-	at_msg = send_at_command_delay("AT+CEREG=0",CEREG_WAIT); // make sure we don't wait for some error codes. just check that we are registered in network
+	at_msg = send_at_command("AT+CEREG=0"); // make sure we don't wait for some error codes. just check that we are registered in network
 	if (!at_msg->conn_status) return at_msg;
+
+	at_msg = send_at_command("AT+CFUN?"); // check that we have full functionality of phone line
+	if (!at_msg->conn_status) return at_msg;
+	if (at_msg->result)
+	    if (strcmp(my_ll_get_first(at_msg->head),"+CFUN: 1") != 0)
+		{
+		at_msg = send_at_command("AT+CFUN=1"); // if not set it
+		if (!at_msg->conn_status) return at_msg; // if error return with error
+		}
+	
+
+	at_msg = send_at_command("AT+CGATT?"); // check that we are attached
+	if (!at_msg->conn_status) return at_msg;
+	if (at_msg->result)
+	    if (strcmp(my_ll_get_first(at_msg->head),"+CGATT:1") !=0)
+		{
+		at_msg = send_at_command("AT+CGATT=1"); // if not try attach
+		if (!at_msg->conn_status) return at_msg;
+		}
+	// assume that we attached 
+
+	at_msg = send_at_command("AT+CGACT?"); // check that we are active
+	if (!at_msg->conn_status) return at_msg;
+	if (at_msg->result)
+	    if (strcmp(my_ll_get_first(at_msg->head),"+CGACT: 3,1") != 0)
+		{
+		at_msg = send_at_command("AT+CGACT=1,3"); // if not try activate
+		if (!at_msg->conn_status) return at_msg;
+		}
+
+	// then we wait for cereg
 	for (i = 0; i < CEREG_MAX_RETRIES; i++) // wait max 
 		{
 		at_msg = send_at_command_delay("AT+CEREG?",CEREG_WAIT);

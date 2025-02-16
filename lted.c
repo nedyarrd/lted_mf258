@@ -37,30 +37,39 @@ void get_uci_config()
 static void signal_handler(int sig, siginfo_t *si, void *unused)
 {
 
-    // remove PID file when we have SIGSEGV
-    FILE *pidFile = fopen("/var/run/lted.pid", "r" );
-    if (pidFile)
-	{
-	fclose(pidFile);
+    // remove PID file when we have SIGxxx
+    struct stat sts;
+    if (stat("/var/run/lted.pid",&sts) != -1)
 	remove("/var/run/lted.pid");
-	}
     exit(EXIT_FAILURE);
 }
 
 void setup()
 {
-    struct sigaction sa;
+    struct sigaction sa_seg;
+    struct sigaction sa_kill;
     FILE *pidFile;
 
     openlog ("LTED", LOG_CONS | LOG_PID | LOG_NDELAY, LOG_LOCAL1);
-    sa.sa_flags = SA_SIGINFO;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_sigaction = signal_handler;
-    if (sigaction(SIGSEGV, &sa, NULL) == -1)
+    sa_seg.sa_flags = SA_SIGINFO;
+    sigemptyset(&sa_seg.sa_mask);
+    sa_seg.sa_sigaction = signal_handler;
+    if (sigaction(SIGSEGV, &sa_seg, NULL) == -1)
 	{
         syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_ERR),"Cant handle Signals");
 	exit(EXIT_FAILURE);
 	}
+
+    sa_kill.sa_flags = SA_SIGINFO;
+    sigemptyset(&sa_kill.sa_mask);
+    sa_kill.sa_sigaction = signal_handler;
+    if (sigaction(SIGSEGV, &sa_kill, NULL) == -1)
+	{
+        syslog(LOG_MAKEPRI(LOG_DAEMON,LOG_ERR),"Cant handle Signals");
+	exit(EXIT_FAILURE);
+	}
+
+
     pidFile = fopen("/var/run/lted.pid", "r" );
     if (pidFile)
 	{
@@ -135,7 +144,7 @@ int main (int argc, char *argv[])
 		at_check_pin();
 		if (!at_cereg()) break;
 		at_cgcontrdp();
-		at_activatepdp4();
+		//at_activatepdp4(); - not needed now
 		// now get to SMS
 		sleep(AT_TIME_BETWEEN_CHECKS);
 		}
